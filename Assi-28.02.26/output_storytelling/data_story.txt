@@ -1,0 +1,10 @@
+Data Story: Sales and Customer Buying Patterns
+
+From Jan to Dec, monthly sales increased from $120k to $220k, a growth of 83.3%.
+The strongest month was Dec, while Jan had the lowest sales.
+
+In category mix, Electronics led with 38.2% of total category sales, showing where the business currently has the strongest demand.
+
+The order-value histogram suggests most purchases cluster around the $60 range, with an average order value of $74.6 and median $75.0. This indicates a reliable mid-value customer segment, with fewer high-value purchases.
+
+Overall trend: sales momentum is positive, category concentration is clear, and customer spend is centered around medium-sized orders.

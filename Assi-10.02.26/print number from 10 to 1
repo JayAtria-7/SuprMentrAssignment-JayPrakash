@@ -1,0 +1,4 @@
+# range(start, stop, step)
+# We start at 10, stop before 0 (so 1), and subtract 1 each time
+for i in range(10, 0, -1):
+    print(i)

@@ -1,0 +1,12 @@
+total_sum = 0
+
+while True:
+    number = int(input("Enter a number (or 0 to stop): "))
+    
+    if number == 0:
+        break  # This exits the loop immediately
+        
+    total_sum += number
+    print(f"Current total: {total_sum}")
+
+print(f"Final total sum is: {total_sum}")
