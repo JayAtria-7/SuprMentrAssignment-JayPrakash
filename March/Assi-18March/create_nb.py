@@ -1,0 +1,223 @@
+import json
+
+notebook = {
+    "cells": [
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "# Customer Segmentation Using K-Means Clustering\n",
+                "\n",
+                "**Assignment Description:** Perform K-Means clustering on a mall dataset and describe customer groups.\n"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "import pandas as pd\n",
+                "import numpy as np\n",
+                "import matplotlib.pyplot as plt\n",
+                "import seaborn as sns\n",
+                "from sklearn.cluster import KMeans\n",
+                "import warnings\n",
+                "warnings.filterwarnings('ignore')\n",
+                "\n",
+                "# Set plot style\n",
+                "sns.set_theme(style=\"whitegrid\")"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 1. Load or Generate Mall Dataset\n",
+                "Since we do not have an external CSV currently, we will generate a synthetic dataset similar to the popular 'Mall_Customers' dataset, featuring Annual Income and Spending Score."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# Generating synthetic mall customer data (similar to standard Mall Customers dataset)\n",
+                "np.random.seed(42)\n",
+                "\n",
+                "# Define 5 typical customer groups based on Income and Spending Score\n",
+                "centers = [[15, 39], [15, 81], [55, 50], [85, 15], [85, 85]] # [Income, Spending Score]\n",
+                "stds = [8, 8, 15, 10, 10]\n",
+                "\n",
+                "X_simulated = []\n",
+                "for center, std in zip(centers, stds):\n",
+                "    X_simulated.append(np.random.normal(loc=center, scale=std, size=(40, 2)))\n",
+                "\n",
+                "X = np.vstack(X_simulated)\n",
+                "X = np.clip(X, 1, 130) # Clip values to be positive and within realistic ranges\n",
+                "\n",
+                "df = pd.DataFrame(X, columns=['Annual_Income_k$', 'Spending_Score'])\n",
+                "\n",
+                "# Add some random IDs, Gender and Age for realism\n",
+                "df['CustomerID'] = range(1, len(df) + 1)\n",
+                "df['Gender'] = np.random.choice(['Male', 'Female'], len(df))\n",
+                "df['Age'] = np.random.randint(18, 70, len(df))\n",
+                "\n",
+                "# Reorder columns\n",
+                "df = df[['CustomerID', 'Gender', 'Age', 'Annual_Income_k$', 'Spending_Score']]\n",
+                "df.head()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 2. Exploratory Data Analysis (EDA)\n",
+                "Let's visualize the distribution of Annual Income vs. Spending Score."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "plt.figure(figsize=(10, 6))\n",
+                "sns.scatterplot(data=df, x='Annual_Income_k$', y='Spending_Score', s=60, hue='Gender')\n",
+                "plt.title('Customer Data: Annual Income vs Spending Score')\n",
+                "plt.xlabel('Annual Income (k$)')\n",
+                "plt.ylabel('Spending Score (1-100)')\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 3. Finding Optimal Number of Clusters (Elbow Method)\n",
+                "We use the Within-Cluster Sum of Squares (WCSS) to find the 'elbow' point which indicates the optimal number of clusters (`k`)."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# We will cluster based on Annual Income and Spending Score\n",
+                "X_cluster = df[['Annual_Income_k$', 'Spending_Score']].values\n",
+                "\n",
+                "wcss = []\n",
+                "for i in range(1, 11):\n",
+                "    kmeans = KMeans(n_clusters=i, init='k-means++', random_state=42)\n",
+                "    kmeans.fit(X_cluster)\n",
+                "    wcss.append(kmeans.inertia_)\n",
+                "\n",
+                "plt.figure(figsize=(8, 5))\n",
+                "plt.plot(range(1, 11), wcss, marker='o', linestyle='--')\n",
+                "plt.title('The Elbow Method')\n",
+                "plt.xlabel('Number of Clusters')\n",
+                "plt.ylabel('WCSS')\n",
+                "plt.xticks(range(1, 11))\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "From the Elbow method, we can observe that the elbow roughly occurs at `k=5`. We will proceed with 5 clusters."
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 4. Training K-Means Model"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "kmeans = KMeans(n_clusters=5, init='k-means++', random_state=42)\n",
+                "df['Cluster'] = kmeans.fit_predict(X_cluster)\n"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 5. Visualizing the Clusters"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "plt.figure(figsize=(10, 7))\n",
+                "\n",
+                "colors = ['red', 'blue', 'green', 'cyan', 'magenta']\n",
+                "for i in range(5):\n",
+                "    plt.scatter(X_cluster[df['Cluster'] == i, 0], X_cluster[df['Cluster'] == i, 1], \n",
+                "                s=60, c=colors[i], label=f'Cluster {i}')\n",
+                "\n",
+                "# Plotting the centroids\n",
+                "plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], \n",
+                "            s=200, c='yellow', marker='*', edgecolor='black', label='Centroids')\n",
+                "\n",
+                "plt.title('Clusters of Customers')\n",
+                "plt.xlabel('Annual Income (k$)')\n",
+                "plt.ylabel('Spending Score (1-100)')\n",
+                "plt.legend()\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 6. Describe Customer Groups\n",
+                "\n",
+                "Based on the clustering above, we can describe the 5 distinct customer groups:\n",
+                "\n",
+                "1.  **Low Income, Low Spending:** Customers with low annual income who also spend less. These might be careful spenders saving their money.\n",
+                "2.  **Low Income, High Spending:** Customers with low annual income but a high spending score. These are potential impulse buyers.\n",
+                "3.  **Average Income, Average Spending:** Customers in the middle for both income and spending. This is usually the largest demographic.\n",
+                "4.  **High Income, Low Spending:** Customers with high income who have a low spending score. These customers are frugal or save their money.\n",
+                "5.  **High Income, High Spending:** Customers with high income who spend heavily. These are prime targets for premium marketing campaigns."
+            ]
+        }
+    ],
+    "metadata": {
+        "kernelspec": {
+            "display_name": "Python 3",
+            "language": "python",
+            "name": "python3"
+        },
+        "language_info": {
+            "codemirror_mode": {
+                "name": "ipython",
+                "version": 3
+            },
+            "file_extension": ".py",
+            "mimetype": "text/x-python",
+            "name": "python",
+            "nbconvert_exporter": "python",
+            "pygments_lexer": "ipython3",
+            "version": "3.8.0"
+        }
+    },
+    "nbformat": 4,
+    "nbformat_minor": 4
+}
+
+with open('Customer_Segmentation.ipynb', 'w', encoding='utf-8') as f:
+    json.dump(notebook, f, indent=1)
+
+print("Notebook generated successfully!")
